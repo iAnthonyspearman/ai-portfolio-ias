@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+.env*
+*.py
+AGENTS.md
+CLAUDE.md
+PROJECT_CONTEXT.md
+ROADMAP.md
+UI_GUIDELINES.md
+components.json

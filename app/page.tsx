@@ -57,17 +57,29 @@ type OrbAnchor = {
   tilt: number;
 };
 
+function shouldUseMobileVisualBudget() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.matchMedia("(max-width: 760px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches;
+}
+
 function useMobileVisualBudget() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(shouldUseMobileVisualBudget);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 640px)");
-    const updateMobileState = () => setIsMobile(mediaQuery.matches);
+    const mediaQueries = [
+      window.matchMedia("(max-width: 760px)"),
+      window.matchMedia("(pointer: coarse)"),
+      window.matchMedia("(prefers-reduced-motion: reduce)"),
+    ];
+    const updateMobileState = () => setIsMobile(shouldUseMobileVisualBudget());
 
     updateMobileState();
-    mediaQuery.addEventListener("change", updateMobileState);
+    mediaQueries.forEach((query) => query.addEventListener("change", updateMobileState));
 
-    return () => mediaQuery.removeEventListener("change", updateMobileState);
+    return () => mediaQueries.forEach((query) => query.removeEventListener("change", updateMobileState));
   }, []);
 
   return isMobile;
@@ -482,7 +494,7 @@ function OrbConstellation({
   palette?: string[];
 }) {
   const isMobile = useMobileVisualBudget();
-  const dpr: [number, number] = isMobile ? [1, 1.2] : [1, 2];
+  const dpr: [number, number] = isMobile ? [1, 1] : [1, 2];
   const primaryLight = palette?.[0] ?? color;
   const secondaryLight = palette?.[palette.length - 1] ?? accent;
 
@@ -490,16 +502,16 @@ function OrbConstellation({
     <Canvas
       dpr={dpr}
       camera={{ position: [0, 0, isMobile ? 4.8 : 4.2], fov: isMobile ? 45 : 42 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
     >
       <color attach="background" args={["#050711"]} />
-      <ambientLight intensity={0.26} />
-      <directionalLight position={[-3.5, 4.4, 4.5]} intensity={2.25} />
-      <pointLight position={[2.4, 2.2, 2.6]} intensity={2.2} color={primaryLight} />
-      <pointLight position={[-2.2, -1.6, 2]} intensity={1.1} color={secondaryLight} />
-      <Environment preset="city" />
-      <Stars radius={35} depth={16} count={isMobile ? 150 : 280} factor={2.4} fade speed={0.2} />
-      <DreiSparkles count={count * (isMobile ? 3 : 5)} scale={[2.4, 1.8, 1]} size={isMobile ? 1.05 : 1.4} speed={0.14} color={secondaryLight} />
+      <ambientLight intensity={isMobile ? 0.34 : 0.26} />
+      <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
+      <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 1.35 : 2.2} color={primaryLight} />
+      <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.72 : 1.1} color={secondaryLight} />
+      {!isMobile && <Environment preset="city" />}
+      <Stars radius={35} depth={16} count={isMobile ? 70 : 280} factor={2.4} fade speed={0.2} />
+      <DreiSparkles count={Math.max(5, count * (isMobile ? 1 : 5))} scale={[2.4, 1.8, 1]} size={isMobile ? 0.82 : 1.4} speed={0.12} color={secondaryLight} />
 
       <OrbConstellationCore
         count={count}
@@ -511,19 +523,21 @@ function OrbConstellation({
         palette={palette}
       />
 
-      <EffectComposer>
+      {!isMobile && (
+        <EffectComposer>
 
 
-        <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
+          <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
 
 
-        <Noise opacity={0.018} />
+          <Noise opacity={0.018} />
 
 
-        <Vignette eskil={false} offset={0.18} darkness={0.62} />
+          <Vignette eskil={false} offset={0.18} darkness={0.62} />
 
 
-      </EffectComposer>
+        </EffectComposer>
+      )}
 
 
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.16 : active ? 0.45 : 0.22} />
@@ -892,17 +906,21 @@ function PortfolioDnaScene({
   palette?: string[];
 }) {
   const isMobile = useMobileVisualBudget();
-  const dpr: [number, number] = isMobile ? [1, 1.2] : [1, 2];
+  const dpr: [number, number] = isMobile ? [1, 1] : [1, 2];
   const primaryLight = palette?.[0] ?? color;
   const secondaryLight = palette?.[5] ?? accent;
 
   return (
-    <Canvas dpr={dpr} camera={{ position: [0, 0, isMobile ? 5.85 : 5.1], fov: isMobile ? 43 : 39 }}>
+    <Canvas
+      dpr={dpr}
+      camera={{ position: [0, 0, isMobile ? 5.85 : 5.1], fov: isMobile ? 43 : 39 }}
+      gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+    >
       <color attach="background" args={["#050711"]} />
-      <ambientLight intensity={0.26} />
-      <directionalLight position={[-3.5, 4.4, 4.5]} intensity={2.25} />
-      <pointLight position={[2.7, 2.4, 2.7]} intensity={2.65} color={primaryLight} />
-      <pointLight position={[-2.4, -1.8, 2.2]} intensity={1.75} color={secondaryLight} />
+      <ambientLight intensity={isMobile ? 0.34 : 0.26} />
+      <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
+      <pointLight position={[2.7, 2.4, 2.7]} intensity={isMobile ? 1.55 : 2.65} color={primaryLight} />
+      <pointLight position={[-2.4, -1.8, 2.2]} intensity={isMobile ? 0.92 : 1.75} color={secondaryLight} />
       {palette?.map((paletteColor, index) => (
         <pointLight
           key={paletteColor}
@@ -911,38 +929,40 @@ function PortfolioDnaScene({
             Math.sin(index * 1.1) * 2.2,
             2 + (index % 3) * 0.5,
           ]}
-          intensity={0.45}
+          intensity={isMobile ? 0.22 : 0.45}
           color={paletteColor}
         />
       ))}
-      <Environment preset="city" />
-      <Stars radius={42} depth={18} count={isMobile ? 220 : 420} factor={3} fade speed={0.22} />
+      {!isMobile && <Environment preset="city" />}
+      <Stars radius={42} depth={18} count={isMobile ? 90 : 420} factor={3} fade speed={0.22} />
       {palette ? (
         palette.map((paletteColor, index) => (
           <DreiSparkles
             key={paletteColor}
-            count={isMobile ? 7 : 10}
+            count={isMobile ? 3 : 10}
             scale={[2.8, 3.4, 1.6]}
-            size={(isMobile ? 1.1 : 1.4) + index * 0.05}
+            size={(isMobile ? 0.9 : 1.4) + index * 0.05}
             speed={0.13 + index * 0.01}
             color={paletteColor}
           />
         ))
       ) : (
-        <DreiSparkles count={isMobile ? 28 : 42} scale={[2.8, 3.4, 1.6]} size={isMobile ? 1.45 : 1.9} speed={0.18} color={accent} />
+        <DreiSparkles count={isMobile ? 12 : 42} scale={[2.8, 3.4, 1.6]} size={isMobile ? 1.1 : 1.9} speed={0.18} color={accent} />
       )}
       <Float speed={1.25} rotationIntensity={0.24} floatIntensity={0.7}>
         <PortfolioDnaHelix color={color} accent={accent} palette={palette} />
       </Float>
-      <EffectComposer>
+      {!isMobile && (
+        <EffectComposer>
 
-        <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
+          <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
 
-        <Noise opacity={0.018} />
+          <Noise opacity={0.018} />
 
-        <Vignette eskil={false} offset={0.18} darkness={0.62} />
+          <Vignette eskil={false} offset={0.18} darkness={0.62} />
 
-      </EffectComposer>
+        </EffectComposer>
+      )}
 
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.18 : 0.35} />
     </Canvas>
@@ -1108,7 +1128,7 @@ export default function Home() {
         </nav>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_.95fr]">
-          <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-6 md:p-8">
+          <motion.section initial={false} animate={{ opacity: 1, y: 0 }} className="glass-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-6 md:p-8">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.06] px-4 py-2 text-sm text-white/70">
               <Globe2 className="h-4 w-4 text-emerald-200" />
               Enterprise AI systems portfolio
@@ -1140,7 +1160,7 @@ export default function Home() {
           </motion.section>
 
           <motion.section
-            initial={{ opacity: 0, y: 24 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             className={`glass-panel selected-system-panel overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 ${activeIsProject8 ? "project-card-combined selected-system-combined" : ""}`}
             style={

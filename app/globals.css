@@ -3,6 +3,7 @@
 :root {
   --background: #050711;
   --foreground: #ffffff;
+  --rainbow-cycle-duration: 5.5s;
 }
 
 * {
@@ -176,6 +177,7 @@ button {
 
 canvas {
   border-radius: 1.5rem;
+  display: block;
   max-width: 100%;
 }
 
@@ -342,7 +344,7 @@ canvas {
   color: transparent !important;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: project8RainbowSweep 1.6s linear infinite;
+  animation: project8RainbowSweep var(--rainbow-cycle-duration) linear infinite;
   text-shadow: none !important;
 }
 
@@ -355,7 +357,7 @@ canvas {
   background-size: 260% 100% !important;
   border-color: rgba(255, 255, 255, 0.34) !important;
   color: white !important;
-  animation: project8RainbowSweep 1.6s linear infinite;
+  animation: project8RainbowSweep var(--rainbow-cycle-duration) linear infinite;
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
@@ -374,7 +376,7 @@ canvas {
   background-size: 260% 100% !important;
   color: white !important;
   border-color: rgba(255,255,255,.36) !important;
-  animation: project8RainbowSweep 1.6s linear infinite;
+  animation: project8RainbowSweep var(--rainbow-cycle-duration) linear infinite;
   box-shadow:
     0 0 22px rgba(239, 68, 68, 0.18),
     0 0 32px rgba(59, 130, 246, 0.12);

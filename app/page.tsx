@@ -324,7 +324,7 @@ function Orb({
         <meshPhysicalMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={active ? 0.34 : 0.14}
+          emissiveIntensity={active ? 0.24 : 0.08}
           metalness={0.84}
           roughness={0.12}
           clearcoat={1}
@@ -335,17 +335,17 @@ function Orb({
 
       <mesh scale={1.52}>
         <sphereGeometry args={[0.18, 32, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={active ? 0.085 : 0.035} />
+        <meshBasicMaterial color={color} transparent opacity={active ? 0.052 : 0.022} />
       </mesh>
 
       <mesh ref={ring} rotation={[1.2 + anchor.tilt, 0.34, 0.6 - anchor.tilt * 0.5]}>
         <torusGeometry args={[0.255, 0.008, 16, 90]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={active ? 0.78 : 0.28} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={active ? 0.52 : 0.18} />
       </mesh>
 
       <mesh position={[-0.07, 0.08, 0.13]} scale={0.34}>
         <sphereGeometry args={[0.08, 20, 20]} />
-        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.56} transparent opacity={0.62} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.38} transparent opacity={0.5} />
       </mesh>
     </group>
   );
@@ -555,8 +555,8 @@ function OrbConstellation({
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={isMobile ? 0.34 : 0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
-      <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 1.05 : 1.55} color={primaryLight} />
-      <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.52 : 0.78} color={secondaryLight} />
+      <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 0.82 : 1.14} color={primaryLight} />
+      <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.36 : 0.54} color={secondaryLight} />
       {!isMobile && <Environment preset="city" />}
       <Stars radius={35} depth={16} count={isMobile ? 70 : 280} factor={2.4} fade speed={0.2} />
       <DreiSparkles count={Math.max(5, count * (isMobile ? 1 : 5))} scale={[2.4, 1.8, 1]} size={isMobile ? 0.82 : 1.4} speed={0.12} color={secondaryLight} />
@@ -575,7 +575,7 @@ function OrbConstellation({
         <EffectComposer>
 
 
-          <Bloom intensity={0.32} luminanceThreshold={0.25} luminanceSmoothing={0.38} />
+          <Bloom intensity={0.18} luminanceThreshold={0.32} luminanceSmoothing={0.42} />
 
 
           <Noise opacity={0.018} />
@@ -666,7 +666,7 @@ function MobileOrbPreview({
                 width: `${length}%`,
                 transform: `rotate(${angle}deg)`,
                 background: `linear-gradient(90deg, transparent, ${linkColor}cc, transparent)`,
-                boxShadow: `0 0 9px ${linkColor}44`,
+                boxShadow: `0 0 5px ${linkColor}33`,
               }}
             />
           );
@@ -686,7 +686,7 @@ function MobileOrbPreview({
               height: anchor.size,
               animationDelay: `${anchor.delay}s`,
               background: `radial-gradient(circle at 32% 24%, #ffffff, ${orbColor} 38%, #02040b 74%)`,
-              boxShadow: `0 0 ${active ? 22 : 15}px ${orbColor}66, inset -10px -12px 24px rgba(0,0,0,.58), inset 7px 7px 14px rgba(255,255,255,.13)`,
+              boxShadow: `0 0 ${active ? 14 : 9}px ${orbColor}44, inset -10px -12px 24px rgba(0,0,0,.62), inset 7px 7px 14px rgba(255,255,255,.1)`,
             }}
           />
         );
@@ -747,7 +747,7 @@ function PowerNode({
         <meshPhysicalMaterial
           color={selected ? accent : color}
           emissive={selected ? accent : color}
-          emissiveIntensity={selected ? 2.2 : 0.75}
+          emissiveIntensity={selected ? 1.35 : 0.42}
           metalness={0.92}
           roughness={0.08}
           clearcoat={1}
@@ -761,7 +761,7 @@ function PowerNode({
         <meshBasicMaterial
           color={selected ? accent : color}
           transparent
-          opacity={selected ? 0.32 : 0.14}
+          opacity={selected ? 0.2 : 0.08}
         />
       </mesh>
 
@@ -770,9 +770,9 @@ function PowerNode({
         <meshStandardMaterial
           color="#ffffff"
           emissive={selected ? accent : color}
-          emissiveIntensity={selected ? 2.2 : 0.85}
+          emissiveIntensity={selected ? 1.25 : 0.45}
           transparent
-          opacity={selected ? 0.9 : 0.48}
+          opacity={selected ? 0.68 : 0.34}
         />
       </mesh>
     </group>
@@ -932,9 +932,9 @@ function PortfolioDnaHelix({
         <meshStandardMaterial
           color="#ffffff"
           emissive={centerColor}
-          emissiveIntensity={palette ? 1.65 : 1.25}
+          emissiveIntensity={palette ? 0.95 : 0.76}
           transparent
-          opacity={palette ? 0.48 : 0.38}
+          opacity={palette ? 0.34 : 0.28}
         />
       </mesh>
 
@@ -944,7 +944,7 @@ function PortfolioDnaHelix({
         <meshPhysicalMaterial
           color={leftRailColor}
           emissive={leftRailColor}
-          emissiveIntensity={palette ? 1.05 : 0.78}
+          emissiveIntensity={palette ? 0.62 : 0.48}
           metalness={0.92}
           roughness={0.08}
           clearcoat={1}
@@ -957,7 +957,7 @@ function PortfolioDnaHelix({
         <meshPhysicalMaterial
           color={rightRailColor}
           emissive={rightRailColor}
-          emissiveIntensity={palette ? 1.0 : 0.72}
+          emissiveIntensity={palette ? 0.6 : 0.45}
           metalness={0.9}
           roughness={0.08}
           clearcoat={1}
@@ -1008,18 +1008,18 @@ function PortfolioDnaHelix({
               <meshStandardMaterial
                 color={selected ? "#ffffff" : node ? rungColor : palette ? rungColor : "#64748b"}
                 emissive={selected ? rungColor : node ? rungColor : palette ? rungColor : "#64748b"}
-                emissiveIntensity={selected ? 2.4 : node ? (palette ? 1.05 : 0.72) : palette ? 0.34 : 0.12}
+                emissiveIntensity={selected ? 1.35 : node ? (palette ? 0.62 : 0.44) : palette ? 0.2 : 0.08}
                 metalness={0.55}
                 roughness={0.16}
                 transparent
-                opacity={selected ? 1 : node ? 0.76 : palette ? 0.36 : 0.22}
+                opacity={selected ? 0.82 : node ? 0.62 : palette ? 0.28 : 0.18}
               />
             </mesh>
 
             {selected && (
               <mesh position={mid.toArray() as [number, number, number]} scale={2.4}>
                 <sphereGeometry args={[0.13, 32, 32]} />
-                <meshBasicMaterial color={rungColor} transparent opacity={0.18} />
+                <meshBasicMaterial color={rungColor} transparent opacity={0.1} />
               </mesh>
             )}
 
@@ -1073,8 +1073,8 @@ function PortfolioDnaScene({
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={isMobile ? 0.34 : 0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
-      <pointLight position={[2.7, 2.4, 2.7]} intensity={isMobile ? 1.55 : 2.65} color={primaryLight} />
-      <pointLight position={[-2.4, -1.8, 2.2]} intensity={isMobile ? 0.92 : 1.75} color={secondaryLight} />
+      <pointLight position={[2.7, 2.4, 2.7]} intensity={isMobile ? 0.95 : 1.65} color={primaryLight} />
+      <pointLight position={[-2.4, -1.8, 2.2]} intensity={isMobile ? 0.5 : 0.95} color={secondaryLight} />
       {palette?.map((paletteColor, index) => (
         <pointLight
           key={paletteColor}
@@ -1083,7 +1083,7 @@ function PortfolioDnaScene({
             Math.sin(index * 1.1) * 2.2,
             2 + (index % 3) * 0.5,
           ]}
-          intensity={isMobile ? 0.22 : 0.45}
+          intensity={isMobile ? 0.12 : 0.24}
           color={paletteColor}
         />
       ))}
@@ -1109,7 +1109,7 @@ function PortfolioDnaScene({
       {!isMobile && (
         <EffectComposer>
 
-          <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
+        <Bloom intensity={0.24} luminanceThreshold={0.32} luminanceSmoothing={0.42} />
 
           <Noise opacity={0.018} />
 

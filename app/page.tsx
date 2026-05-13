@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -56,6 +56,22 @@ type OrbAnchor = {
   phase: number;
   tilt: number;
 };
+
+function useMobileVisualBudget() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const updateMobileState = () => setIsMobile(mediaQuery.matches);
+
+    updateMobileState();
+    mediaQuery.addEventListener("change", updateMobileState);
+
+    return () => mediaQuery.removeEventListener("change", updateMobileState);
+  }, []);
+
+  return isMobile;
+}
 
 const portfolioItems: PortfolioItem[] = [
   {
@@ -197,6 +213,13 @@ const portfolioItems: PortfolioItem[] = [
   },
 ];
 
+const project8SystemPalette = portfolioItems.slice(0, 7).map((item) => item.color);
+const project8RainbowGradient = `linear-gradient(90deg, ${project8SystemPalette.join(", ")})`;
+
+function paletteForProject(id: number) {
+  return id === 8 ? project8SystemPalette : undefined;
+}
+
 function Orb({
   anchor,
   color,
@@ -331,12 +354,16 @@ function OrbConstellationCore({
   accent,
   active,
   label,
+  compact,
+  palette,
 }: {
   count: number;
   color: string;
   accent: string;
   active: boolean;
   label: string;
+  compact: boolean;
+  palette?: string[];
 }) {
   const group = useRef<THREE.Group>(null);
 
@@ -355,9 +382,10 @@ function OrbConstellationCore({
     }
 
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    const lateralSpread = Math.min(1.5, 0.66 + count * 0.095);
-    const verticalSpread = Math.min(1.12, 0.58 + count * 0.065);
-    const depthSpread = Math.min(1.08, 0.34 + count * 0.08);
+    const compactScale = compact ? 0.84 : 1;
+    const lateralSpread = Math.min(1.5, 0.66 + count * 0.095) * compactScale;
+    const verticalSpread = Math.min(1.12, 0.58 + count * 0.065) * (compact ? 0.88 : 1);
+    const depthSpread = Math.min(1.08, 0.34 + count * 0.08) * (compact ? 0.82 : 1);
 
     return Array.from({ length: count }, (_, index) => {
       const t = count === 1 ? 0.5 : index / (count - 1);
@@ -373,14 +401,14 @@ function OrbConstellationCore({
           verticalBias + Math.sin(angle * 1.35) * 0.13,
           Math.sin(angle) * depthSpread + depthLayer + Math.cos(index * 0.73) * 0.11,
         ],
-        scale,
-        orbit: 0.035 + (index % 4) * 0.011,
-        speed: 0.46 + (index % 5) * 0.075,
+        scale: scale * (compact ? 0.92 : 1),
+        orbit: (0.035 + (index % 4) * 0.011) * (compact ? 0.72 : 1),
+        speed: compact ? 0.36 + (index % 5) * 0.052 : 0.46 + (index % 5) * 0.075,
         phase: index * 0.91 + count * 0.21,
         tilt: Math.sin(index * 1.23) * 0.42,
       };
     });
-  }, [count]);
+  }, [compact, count]);
 
   useFrame((_, delta) => {
     if (!group.current) return;
@@ -390,14 +418,14 @@ function OrbConstellationCore({
   });
 
   return (
-    <Float speed={1.2} rotationIntensity={0.18} floatIntensity={0.52}>
+    <Float speed={compact ? 0.9 : 1.2} rotationIntensity={compact ? 0.11 : 0.18} floatIntensity={compact ? 0.32 : 0.52}>
       <group ref={group}>
         {anchors.map((anchor, index) => (
           <Orb
             key={index}
             anchor={anchor}
-            color={index % 2 === 0 ? color : accent}
-            accent={accent}
+            color={palette?.[index % palette.length] ?? (index % 2 === 0 ? color : accent)}
+            accent={palette?.[(index + 1) % palette.length] ?? accent}
             active={active}
           />
         ))}
@@ -409,12 +437,12 @@ function OrbConstellationCore({
 
             return (
               <group key={`link-set-${index}`}>
-                <ConstellationLink start={anchor} end={next} accent={accent} active={active} />
+                <ConstellationLink start={anchor} end={next} accent={palette?.[index % palette.length] ?? accent} active={active} />
                 {anchors.length > 3 && index % 2 === 0 && (
                   <ConstellationLink
                     start={anchor}
                     end={depthPartner}
-                    accent={accent}
+                    accent={palette?.[(index + 2) % palette.length] ?? accent}
                     active={active}
                     secondary
                   />
@@ -424,9 +452,10 @@ function OrbConstellationCore({
           })}
 
         <Text
-          position={[0, -1.45, 0]}
-          fontSize={0.13}
-          color="#cbd5e1"
+          position={[0, compact ? -1.22 : -1.45, 0]}
+          fontSize={compact ? 0.105 : 0.13}
+          maxWidth={compact ? 1.75 : 2.6}
+          color={palette?.[count % palette.length] ?? "#cbd5e1"}
           anchorX="center"
           anchorY="middle"
         >
@@ -443,27 +472,34 @@ function OrbConstellation({
   accent,
   active,
   label,
+  palette,
 }: {
   count: number;
   color: string;
   accent: string;
   active: boolean;
   label: string;
+  palette?: string[];
 }) {
+  const isMobile = useMobileVisualBudget();
+  const dpr: [number, number] = isMobile ? [1, 1.2] : [1, 2];
+  const primaryLight = palette?.[0] ?? color;
+  const secondaryLight = palette?.[palette.length - 1] ?? accent;
+
   return (
     <Canvas
-      dpr={[1, 2]}
-      camera={{ position: [0, 0, 4.2], fov: 42 }}
+      dpr={dpr}
+      camera={{ position: [0, 0, isMobile ? 4.8 : 4.2], fov: isMobile ? 45 : 42 }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
     >
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={2.25} />
-      <pointLight position={[2.4, 2.2, 2.6]} intensity={2.2} color={color} />
-      <pointLight position={[-2.2, -1.6, 2]} intensity={1.1} color={accent} />
+      <pointLight position={[2.4, 2.2, 2.6]} intensity={2.2} color={primaryLight} />
+      <pointLight position={[-2.2, -1.6, 2]} intensity={1.1} color={secondaryLight} />
       <Environment preset="city" />
-      <Stars radius={35} depth={16} count={280} factor={2.4} fade speed={0.2} />
-      <DreiSparkles count={count * 5} scale={[2.4, 1.8, 1]} size={1.4} speed={0.14} color={accent} />
+      <Stars radius={35} depth={16} count={isMobile ? 150 : 280} factor={2.4} fade speed={0.2} />
+      <DreiSparkles count={count * (isMobile ? 3 : 5)} scale={[2.4, 1.8, 1]} size={isMobile ? 1.05 : 1.4} speed={0.14} color={secondaryLight} />
 
       <OrbConstellationCore
         count={count}
@@ -471,6 +507,8 @@ function OrbConstellation({
         accent={accent}
         active={active}
         label={label}
+        compact={isMobile}
+        palette={palette}
       />
 
       <EffectComposer>
@@ -488,7 +526,7 @@ function OrbConstellation({
       </EffectComposer>
 
 
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={active ? 0.45 : 0.22} />
+      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.16 : active ? 0.45 : 0.22} />
     </Canvas>
   );
 }
@@ -578,11 +616,13 @@ function MovingPowerLight({
   targetT,
   accent,
   color,
+  palette,
 }: {
   curve: THREE.CatmullRomCurve3;
   targetT: number | null;
   accent: string;
   color: string;
+  palette?: string[];
 }) {
   const main = useRef<THREE.Group>(null);
   const trailA = useRef<THREE.Mesh>(null);
@@ -609,6 +649,9 @@ function MovingPowerLight({
     if (light.current) {
       light.current.position.copy(point);
       light.current.intensity = targetT === null ? 2.4 : 4.8;
+      if (palette) {
+        light.current.color.set(palette[Math.floor(t * palette.length) % palette.length]);
+      }
     }
 
     const trailPoints = [
@@ -664,13 +707,19 @@ function MovingPowerLight({
 function PortfolioDnaHelix({
   color,
   accent,
+  palette,
 }: {
   color: string;
   accent: string;
+  palette?: string[];
 }) {
   const group = useRef<THREE.Group>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const count = 42;
+  const dnaColors = palette ?? [color, accent];
+  const centerColor = palette?.[3] ?? accent;
+  const leftRailColor = palette?.[5] ?? color;
+  const rightRailColor = palette?.[6] ?? accent;
 
   const left = useMemo(() => {
     return Array.from({ length: count }, (_, i) => {
@@ -707,17 +756,17 @@ function PortfolioDnaHelix({
       {/* Thick glowing center power channel */}
       <mesh>
         <tubeGeometry args={[centerPath, 240, 0.035, 18, false]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.16} />
+        <meshBasicMaterial color={centerColor} transparent opacity={palette ? 0.22 : 0.16} />
       </mesh>
 
       <mesh>
         <tubeGeometry args={[centerPath, 240, 0.018, 16, false]} />
         <meshStandardMaterial
           color="#ffffff"
-          emissive={accent}
-          emissiveIntensity={1.25}
+          emissive={centerColor}
+          emissiveIntensity={palette ? 1.65 : 1.25}
           transparent
-          opacity={0.38}
+          opacity={palette ? 0.48 : 0.38}
         />
       </mesh>
 
@@ -725,9 +774,9 @@ function PortfolioDnaHelix({
       <mesh>
         <tubeGeometry args={[new THREE.CatmullRomCurve3(left), 240, 0.04, 18, false]} />
         <meshPhysicalMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={0.78}
+          color={leftRailColor}
+          emissive={leftRailColor}
+          emissiveIntensity={palette ? 1.05 : 0.78}
           metalness={0.92}
           roughness={0.08}
           clearcoat={1}
@@ -738,9 +787,9 @@ function PortfolioDnaHelix({
       <mesh>
         <tubeGeometry args={[new THREE.CatmullRomCurve3(right), 240, 0.04, 18, false]} />
         <meshPhysicalMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={0.72}
+          color={rightRailColor}
+          emissive={rightRailColor}
+          emissiveIntensity={palette ? 1.0 : 0.72}
           metalness={0.9}
           roughness={0.08}
           clearcoat={1}
@@ -748,7 +797,20 @@ function PortfolioDnaHelix({
         />
       </mesh>
 
-      <MovingPowerLight curve={centerPath} targetT={selectedT} accent={accent} color={color} />
+      {palette && (
+        <>
+          <mesh rotation={[0, 0.28, 0]}>
+            <tubeGeometry args={[new THREE.CatmullRomCurve3(left), 180, 0.012, 12, false]} />
+            <meshBasicMaterial color={palette[0]} transparent opacity={0.35} />
+          </mesh>
+          <mesh rotation={[0, -0.28, 0]}>
+            <tubeGeometry args={[new THREE.CatmullRomCurve3(right), 180, 0.012, 12, false]} />
+            <meshBasicMaterial color={palette[2]} transparent opacity={0.28} />
+          </mesh>
+        </>
+      )}
+
+      <MovingPowerLight curve={centerPath} targetT={selectedT} accent={centerColor} color={palette?.[0] ?? color} palette={palette} />
 
       {left.map((point, index) => {
         const rightPoint = right[index];
@@ -756,6 +818,8 @@ function PortfolioDnaHelix({
         const selected = selectedIndex === index;
         const mid = point.clone().lerp(rightPoint, 0.5);
         const rungCurve = new THREE.CatmullRomCurve3([point, mid, rightPoint]);
+        const rungColor = dnaColors[index % dnaColors.length];
+        const nextRungColor = dnaColors[(index + 1) % dnaColors.length];
 
         return (
           <group key={index}>
@@ -774,20 +838,20 @@ function PortfolioDnaHelix({
             >
               <tubeGeometry args={[rungCurve, 24, selected ? 0.026 : node ? 0.014 : 0.008, 12, false]} />
               <meshStandardMaterial
-                color={selected ? "#ffffff" : node ? accent : "#64748b"}
-                emissive={selected ? accent : node ? accent : "#64748b"}
-                emissiveIntensity={selected ? 2.4 : node ? 0.72 : 0.12}
+                color={selected ? "#ffffff" : node ? rungColor : palette ? rungColor : "#64748b"}
+                emissive={selected ? rungColor : node ? rungColor : palette ? rungColor : "#64748b"}
+                emissiveIntensity={selected ? 2.4 : node ? (palette ? 1.05 : 0.72) : palette ? 0.34 : 0.12}
                 metalness={0.55}
                 roughness={0.16}
                 transparent
-                opacity={selected ? 1 : node ? 0.76 : 0.22}
+                opacity={selected ? 1 : node ? 0.76 : palette ? 0.36 : 0.22}
               />
             </mesh>
 
             {selected && (
               <mesh position={mid.toArray() as [number, number, number]} scale={2.4}>
                 <sphereGeometry args={[0.13, 32, 32]} />
-                <meshBasicMaterial color={accent} transparent opacity={0.18} />
+                <meshBasicMaterial color={rungColor} transparent opacity={0.18} />
               </mesh>
             )}
 
@@ -795,16 +859,16 @@ function PortfolioDnaHelix({
               <>
                 <PowerNode
                   position={point.toArray() as [number, number, number]}
-                  color={color}
-                  accent={accent}
+                  color={rungColor}
+                  accent={nextRungColor}
                   index={index}
                   selected={selected}
                   onSelect={() => setSelectedIndex(index)}
                 />
                 <PowerNode
                   position={rightPoint.toArray() as [number, number, number]}
-                  color={accent}
-                  accent={color}
+                  color={nextRungColor}
+                  accent={rungColor}
                   index={index + 1}
                   selected={selected}
                   onSelect={() => setSelectedIndex(index)}
@@ -821,22 +885,54 @@ function PortfolioDnaHelix({
 function PortfolioDnaScene({
   color,
   accent,
+  palette,
 }: {
   color: string;
   accent: string;
+  palette?: string[];
 }) {
+  const isMobile = useMobileVisualBudget();
+  const dpr: [number, number] = isMobile ? [1, 1.2] : [1, 2];
+  const primaryLight = palette?.[0] ?? color;
+  const secondaryLight = palette?.[5] ?? accent;
+
   return (
-    <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5.1], fov: 39 }}>
+    <Canvas dpr={dpr} camera={{ position: [0, 0, isMobile ? 5.85 : 5.1], fov: isMobile ? 43 : 39 }}>
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={2.25} />
-      <pointLight position={[2.7, 2.4, 2.7]} intensity={2.65} color={color} />
-      <pointLight position={[-2.4, -1.8, 2.2]} intensity={1.75} color={accent} />
+      <pointLight position={[2.7, 2.4, 2.7]} intensity={2.65} color={primaryLight} />
+      <pointLight position={[-2.4, -1.8, 2.2]} intensity={1.75} color={secondaryLight} />
+      {palette?.map((paletteColor, index) => (
+        <pointLight
+          key={paletteColor}
+          position={[
+            Math.cos(index * 0.9) * 2.7,
+            Math.sin(index * 1.1) * 2.2,
+            2 + (index % 3) * 0.5,
+          ]}
+          intensity={0.45}
+          color={paletteColor}
+        />
+      ))}
       <Environment preset="city" />
-      <Stars radius={42} depth={18} count={420} factor={3} fade speed={0.22} />
-      <DreiSparkles count={42} scale={[2.8, 3.4, 1.6]} size={1.9} speed={0.18} color={accent} />
+      <Stars radius={42} depth={18} count={isMobile ? 220 : 420} factor={3} fade speed={0.22} />
+      {palette ? (
+        palette.map((paletteColor, index) => (
+          <DreiSparkles
+            key={paletteColor}
+            count={isMobile ? 7 : 10}
+            scale={[2.8, 3.4, 1.6]}
+            size={(isMobile ? 1.1 : 1.4) + index * 0.05}
+            speed={0.13 + index * 0.01}
+            color={paletteColor}
+          />
+        ))
+      ) : (
+        <DreiSparkles count={isMobile ? 28 : 42} scale={[2.8, 3.4, 1.6]} size={isMobile ? 1.45 : 1.9} speed={0.18} color={accent} />
+      )}
       <Float speed={1.25} rotationIntensity={0.24} floatIntensity={0.7}>
-        <PortfolioDnaHelix color={color} accent={accent} />
+        <PortfolioDnaHelix color={color} accent={accent} palette={palette} />
       </Float>
       <EffectComposer>
 
@@ -848,7 +944,7 @@ function PortfolioDnaScene({
 
       </EffectComposer>
 
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.35} />
+      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.18 : 0.35} />
     </Canvas>
   );
 }
@@ -860,11 +956,14 @@ function ProjectModal({
   item: PortfolioItem | null;
   onClose: () => void;
 }) {
+  const isProject8 = item?.id === 8;
+  const projectPalette = item ? paletteForProject(item.id) : undefined;
+
   return (
     <AnimatePresence>
       {item && (
         <motion.div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-5 py-8 backdrop-blur-xl"
+          className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/75 px-3 py-3 backdrop-blur-xl sm:items-center sm:px-5 sm:py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -879,31 +978,41 @@ function ProjectModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 28 }}
             transition={{ type: "spring", stiffness: 135, damping: 18 }}
-            className="modal-shell glass-panel w-full max-w-6xl rounded-[2rem] p-6"
-            style={{ borderColor: `${item.color}66`, boxShadow: `0 0 90px ${item.color}22, 0 40px 140px rgba(0,0,0,.65)` }}
+            className={`modal-shell glass-panel w-full max-w-6xl rounded-[1.35rem] p-4 sm:rounded-[2rem] sm:p-6 ${isProject8 ? "project-card-combined modal-combined" : ""}`}
+            style={
+              {
+                "--project-color": item.color,
+                "--project-accent": item.accent,
+                "--project-rainbow": project8RainbowGradient,
+                borderColor: isProject8 ? "rgba(255, 255, 255, 0.36)" : `${item.color}66`,
+                boxShadow: isProject8
+                  ? "0 0 42px rgba(239,68,68,.22), 0 0 72px rgba(34,197,94,.16), 0 0 104px rgba(59,130,246,.16), 0 40px 140px rgba(0,0,0,.65)"
+                  : `0 0 90px ${item.color}22, 0 40px 140px rgba(0,0,0,.65)`,
+              } as CSSProperties
+            }
           >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.28em]" style={{ color: item.accent }}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm uppercase tracking-[0.28em] ${isProject8 ? "combined-word subtle" : ""}`} style={{ color: item.accent }}>
                   {item.status}
                 </p>
-                <h3 id="project-modal-title" className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">{item.name}</h3>
-                <p className="mt-3 text-sm text-white/45">{item.folder}</p>
+                <h3 id="project-modal-title" className={`mt-2 text-2xl font-semibold tracking-tight sm:text-3xl md:text-5xl ${isProject8 ? "combined-word" : ""}`}>{item.name}</h3>
+                <p className={`mt-3 break-words text-sm text-white/45 ${isProject8 ? "combined-word subtle" : ""}`}>{item.folder}</p>
               </div>
 
               <button
                 type="button"
                 aria-label="Close project details"
                 onClick={onClose}
-                className="rounded-2xl border border-white/10 bg-white/[.06] p-3 text-white/65 transition hover:bg-white/[.12] hover:text-white"
+                className={`rounded-2xl border border-white/10 bg-white/[.06] p-3 text-white/65 transition hover:bg-white/[.12] hover:text-white ${isProject8 ? "combined-icon-button" : ""}`}
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
-              <div className="modal-dna h-[420px] overflow-hidden rounded-[1.7rem] border border-white/10 bg-black/35">
-                <PortfolioDnaScene color={item.color} accent={item.accent} />
+            <div className="mt-5 grid gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[.9fr_1.1fr]">
+              <div className={`modal-dna h-[260px] overflow-hidden rounded-[1.15rem] border border-white/10 bg-black/35 sm:h-[340px] sm:rounded-[1.7rem] lg:h-[420px] ${isProject8 ? "combined-dna" : ""}`}>
+                <PortfolioDnaScene color={item.color} accent={item.accent} palette={projectPalette} />
               </div>
 
               <div className="space-y-4">
@@ -912,29 +1021,29 @@ function ProjectModal({
                   ["Real business use", item.businessUse],
                   ["Workflow value", item.workflowValue],
                 ].map(([title, body]) => (
-                  <div key={title} className="rounded-3xl border border-white/10 bg-black/25 p-5">
-                    <p className="mb-2 font-semibold" style={{ color: item.accent }}>{title}</p>
+                  <div key={title} className="rounded-2xl border border-white/10 bg-black/25 p-4 sm:rounded-3xl sm:p-5">
+                    <p className={`mb-2 font-semibold ${isProject8 ? "combined-word subtle" : ""}`} style={{ color: item.accent }}>{title}</p>
                     <p className="text-sm leading-7 text-white/62">{body}</p>
                   </div>
                 ))}
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
-                    <p className="mb-3 font-semibold" style={{ color: item.accent }}>Industries</p>
+                  <div className="rounded-2xl border border-white/10 bg-black/25 p-4 sm:rounded-3xl sm:p-5">
+                    <p className={`mb-3 font-semibold ${isProject8 ? "combined-word subtle" : ""}`} style={{ color: item.accent }}>Industries</p>
                     <div className="flex flex-wrap gap-2">
                       {item.industries.map((industry) => (
-                        <span key={industry} className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-xs text-white/65">
+                        <span key={industry} className={`rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-xs text-white/65 ${isProject8 ? "combined-chip" : ""}`}>
                           {industry}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
-                    <p className="mb-3 font-semibold" style={{ color: item.accent }}>Proves</p>
+                  <div className="rounded-2xl border border-white/10 bg-black/25 p-4 sm:rounded-3xl sm:p-5">
+                    <p className={`mb-3 font-semibold ${isProject8 ? "combined-word subtle" : ""}`} style={{ color: item.accent }}>Proves</p>
                     <div className="flex flex-wrap gap-2">
                       {item.proves.map((proof) => (
-                        <span key={proof} className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-xs text-white/65">
+                        <span key={proof} className={`rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-xs text-white/65 ${isProject8 ? "combined-chip" : ""}`}>
                           {proof}
                         </span>
                       ))}
@@ -943,11 +1052,11 @@ function ProjectModal({
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <a href={item.live} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1]">
+                  <a href={item.live} target="_blank" rel="noreferrer" className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1] sm:w-auto ${isProject8 ? "combined-chip" : ""}`}>
                     Open Live Demo <ExternalLink className="h-4 w-4" />
                   </a>
                   {item.github && (
-                    <a href={item.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1]">
+                    <a href={item.github} target="_blank" rel="noreferrer" className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1] sm:w-auto ${isProject8 ? "combined-chip" : ""}`}>
                       GitHub <ExternalLink className="h-4 w-4" />
                     </a>
                   )}
@@ -970,75 +1079,88 @@ export default function Home() {
   const [activeId, setActiveId] = useState(8);
   const [openProject, setOpenProject] = useState<PortfolioItem | null>(null);
   const active = portfolioItems.find((item) => item.id === activeId) ?? portfolioItems[7];
+  const activeIsProject8 = active.id === 8;
+  const activePalette = paletteForProject(active.id);
 
   return (
-    <main className="portfolio-cosmos min-h-screen overflow-hidden bg-[#050711] text-white">
+    <main className="portfolio-cosmos min-h-screen overflow-x-hidden bg-[#050711] text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(239,68,68,.16),transparent_28%),radial-gradient(circle_at_40%_8%,rgba(234,179,8,.12),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(139,92,246,.14),transparent_32%),radial-gradient(circle_at_50%_92%,rgba(20,184,166,.12),transparent_32%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.03)_1px,transparent_1px)] bg-[size:54px_54px] [mask-image:radial-gradient(circle_at_center,black,transparent_82%)]" />
       </div>
 
-      <section className="relative z-10 mx-auto flex max-w-7xl flex-col gap-7 px-5 py-6 lg:px-8">
-        <nav className="glass-panel flex flex-wrap items-center justify-between gap-4 rounded-3xl px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
+      <section className="relative z-10 mx-auto flex max-w-7xl flex-col gap-5 px-4 py-4 sm:gap-7 sm:px-5 sm:py-6 lg:px-8">
+        <nav className="glass-panel flex flex-wrap items-start justify-between gap-4 rounded-2xl px-4 py-4 sm:items-center sm:rounded-3xl sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 sm:h-12 sm:w-12">
               <Command className="h-5 w-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm text-white/50">AI Career Portfolio</p>
-              <h1 className="text-lg font-semibold tracking-tight">Intelligence Automation Systems</h1>
+              <h1 className="text-base font-semibold tracking-tight sm:text-lg">Intelligence Automation Systems</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-2 text-sm text-white/60">
-            <Sparkles className="h-4 w-4 text-pink-200" />
+          <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-2 text-xs text-white/60 sm:w-auto sm:text-sm">
+            <Sparkles className="h-4 w-4 shrink-0 text-pink-200" />
             Projects 1–8 • Enterprise AI Systems
           </div>
         </nav>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_.95fr]">
-          <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-6 md:p-8">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.06] px-4 py-2 text-sm text-white/70">
               <Globe2 className="h-4 w-4 text-emerald-200" />
               Enterprise AI systems portfolio
             </div>
 
-            <h2 className="max-w-4xl text-4xl font-semibold tracking-[-0.04em] md:text-6xl">
+            <h2 className="max-w-4xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl md:text-6xl">
               Eight AI systems. One evolving intelligence architecture.
             </h2>
 
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-white/62">
+            <p className="mt-5 max-w-3xl text-base leading-7 text-white/62 sm:text-lg sm:leading-8">
               This portfolio shows a progression from AI deployment and workflow automation to enterprise orchestration
               and autonomous operations. Each system represents a real business use case, technical skill, and step toward
               enterprise-grade AI Solutions Engineering.
             </p>
 
-            <div className="mt-8 grid gap-3 md:grid-cols-4">
+            <div className="mt-7 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-4">
               {[
                 ["8", "Active systems"],
                 ["3D", "Interactive visuals"],
                 ["AI", "Operational logic"],
                 ["Vercel", "Live deployment"],
               ].map(([value, label]) => (
-                <div key={label} className="rounded-3xl border border-white/10 bg-black/25 p-4">
-                  <p className="text-3xl font-semibold">{value}</p>
+                <div key={label} className="rounded-2xl border border-white/10 bg-black/25 p-4 sm:rounded-3xl">
+                  <p className="text-2xl font-semibold sm:text-3xl">{value}</p>
                   <p className="mt-1 text-sm text-white/45">{label}</p>
                 </div>
               ))}
             </div>
           </motion.section>
 
-          <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass-panel selected-system-panel overflow-hidden rounded-[2rem] p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/50">Selected System</p>
-                <h3 className="text-2xl font-semibold">{active.name}</h3>
+          <motion.section
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`glass-panel selected-system-panel overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 ${activeIsProject8 ? "project-card-combined selected-system-combined" : ""}`}
+            style={
+              {
+                "--project-color": active.color,
+                "--project-accent": active.accent,
+                "--project-rainbow": project8RainbowGradient,
+              } as CSSProperties
+            }
+          >
+            <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5 sm:items-center">
+              <div className="min-w-0">
+                <p className={`text-sm text-white/50 ${activeIsProject8 ? "combined-word subtle" : ""}`}>Selected System</p>
+                <h3 className={`text-xl font-semibold sm:text-2xl ${activeIsProject8 ? "combined-word" : ""}`}>{active.name}</h3>
               </div>
-              <Layers3 className="h-6 w-6" style={{ color: active.accent }} />
+              <Layers3 className={`h-6 w-6 shrink-0 ${activeIsProject8 ? "combined-icon" : ""}`} style={{ color: active.accent }} />
             </div>
 
-            <div className="h-[390px] overflow-hidden rounded-3xl border border-white/10 bg-black/35">
-              <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} />
+            <div className="h-[290px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[390px] sm:rounded-3xl">
+              <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
             </div>
           </motion.section>
         </div>
@@ -1047,6 +1169,8 @@ export default function Home() {
           {portfolioItems.map((item) => {
             const Icon = iconFor(item.id);
             const selected = activeId === item.id;
+            const isProject8 = item.id === 8;
+            const projectPalette = paletteForProject(item.id);
 
             return (
               <motion.button
@@ -1054,15 +1178,17 @@ export default function Home() {
                 aria-label={`Open ${item.name} details`}
                 key={item.id}
                 whileHover={{ y: -6, scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
                 onClick={() => {
                   setActiveId(item.id);
                   setOpenProject(item);
                 }}
-                className={`glass-panel project-card group rounded-[2rem] p-5 text-left transition ${selected ? "ring-1 ring-white/30" : ""}`}
+                className={`glass-panel project-card group rounded-[1.5rem] p-4 text-left transition sm:rounded-[2rem] sm:p-5 ${selected ? "ring-1 ring-white/30" : ""} ${isProject8 ? "project-card-combined" : ""}`}
                 style={
                   {
                     "--project-color": item.color,
                     "--project-accent": item.accent,
+                    "--project-rainbow": project8RainbowGradient,
                     borderColor: selected ? `${item.color}aa` : `${item.color}44`,
                     boxShadow: selected
                       ? `0 0 38px ${item.color}44, 0 0 90px ${item.color}24, 0 30px 100px rgba(0,0,0,.58)`
@@ -1070,26 +1196,33 @@ export default function Home() {
                   } as CSSProperties
                 }
               >
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: `${item.color}25` }}>
-                    <Icon className="h-5 w-5" style={{ color: item.accent }} />
+                <div className="mb-4 flex items-start justify-between gap-3 sm:items-center">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:h-12 sm:w-12" style={{ backgroundColor: `${item.color}25` }}>
+                    <Icon className={`h-5 w-5 ${isProject8 ? "combined-icon" : ""}`} style={{ color: item.accent }} />
                   </div>
-                  <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/50">{item.status}</span>
+                  <span className={`rounded-full border border-white/10 bg-black/25 px-3 py-1 text-right text-xs text-white/50 ${isProject8 ? "combined-chip" : ""}`}>{item.status}</span>
                 </div>
 
-                <div className="h-[180px] overflow-hidden rounded-3xl border border-white/10 bg-black/35">
-                  <OrbConstellation count={item.id} color={item.color} accent={item.accent} active={selected} label={`${item.id}`} />
+                <div className="h-[170px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[180px] sm:rounded-3xl">
+                  <OrbConstellation
+                    count={item.id}
+                    color={item.color}
+                    accent={item.accent}
+                    active={selected || isProject8}
+                    label={`${item.id}`}
+                    palette={projectPalette}
+                  />
                 </div>
 
-                <h3 className="mt-5 text-xl font-semibold" style={{ color: item.accent, textShadow: `0 0 16px ${item.color}77` }}>
+                <h3 className={`mt-5 text-xl font-semibold ${isProject8 ? "combined-word" : ""}`} style={{ color: item.accent, textShadow: `0 0 16px ${item.color}77` }}>
                   {item.name}
                 </h3>
-                <p className="mt-2 text-xs text-white/35">{item.folder}</p>
+                <p className={`mt-2 text-xs text-white/35 ${isProject8 ? "combined-word subtle" : ""}`}>{item.folder}</p>
                 <p className="mt-4 text-sm leading-6 text-white/58">{item.purpose}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {item.proves.map((tag) => (
-                    <span key={tag} className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-xs text-white/50">{tag}</span>
+                    <span key={tag} className={`rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-xs text-white/50 ${isProject8 ? "combined-chip" : ""}`}>{tag}</span>
                   ))}
                 </div>
               </motion.button>
@@ -1098,71 +1231,93 @@ export default function Home() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[.95fr_1.05fr]">
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6">
             <div className="mb-5 flex items-center gap-3">
-              <Cpu className="h-6 w-6 text-emerald-200" />
-              <div>
+              <Cpu className="h-6 w-6 shrink-0 text-emerald-200" />
+              <div className="min-w-0">
                 <p className="text-sm text-white/50">Portfolio Maturity Path</p>
-                <h3 className="text-2xl font-semibold">From deployment to autonomous operations</h3>
+                <h3 className="text-xl font-semibold sm:text-2xl">From deployment to autonomous operations</h3>
               </div>
             </div>
 
             <div className="space-y-3">
-              {portfolioItems.map((item) => (
-                <motion.button
-                  type="button"
-                  aria-pressed={activeId === item.id}
-                  aria-label={`Select ${item.name}`}
-                  key={item.id}
-                  onClick={() => setActiveId(item.id)}
-                  whileTap={{ scale: 0.985 }}
-                  className="maturity-path-button group flex w-full items-center gap-4 rounded-3xl border bg-black/25 p-4 text-left transition"
-                  style={{
-                    borderColor: `${item.color}55`,
-                    boxShadow: activeId === item.id ? `0 0 36px ${item.color}33, inset 0 0 24px ${item.color}11` : `0 0 24px ${item.color}18`,
-                  }}
-                >
-                  <span
-                    className="flex h-10 w-10 items-center justify-center rounded-2xl font-semibold"
-                    style={{ backgroundColor: `${item.color}25`, color: item.accent, boxShadow: `0 0 18px ${item.color}30` }}
+              {portfolioItems.map((item) => {
+                const isProject8 = item.id === 8;
+
+                return (
+                  <motion.button
+                    type="button"
+                    aria-pressed={activeId === item.id}
+                    aria-label={`Select ${item.name}`}
+                    key={item.id}
+                    onClick={() => setActiveId(item.id)}
+                    whileTap={{ scale: 0.985 }}
+                    className={`maturity-path-button group flex w-full items-center gap-3 rounded-2xl border bg-black/25 p-3 text-left transition sm:gap-4 sm:rounded-3xl sm:p-4 ${isProject8 ? "project-card-combined maturity-combined" : ""}`}
+                    style={
+                      {
+                        "--project-color": item.color,
+                        "--project-accent": item.accent,
+                        "--project-rainbow": project8RainbowGradient,
+                        borderColor: isProject8 ? "rgba(255, 255, 255, 0.36)" : `${item.color}55`,
+                        boxShadow: isProject8
+                          ? "0 0 36px rgba(239,68,68,.2), 0 0 46px rgba(34,197,94,.14), 0 0 62px rgba(59,130,246,.14), inset 0 0 24px rgba(255,255,255,.08)"
+                          : activeId === item.id
+                            ? `0 0 36px ${item.color}33, inset 0 0 24px ${item.color}11`
+                            : `0 0 24px ${item.color}18`,
+                      } as CSSProperties
+                    }
                   >
-                    {item.id}
-                  </span>
-                  <div className="flex-1">
-                    <p
-                      className="font-semibold tracking-tight transition"
-                      style={{
-                        color: item.accent,
-                        textShadow:
-                          activeId === item.id
-                            ? `0 0 8px ${item.color}, 0 0 18px ${item.color}, 0 0 34px ${item.color}`
-                            : `0 0 10px ${item.color}77`,
-                      }}
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-semibold ${isProject8 ? "combined-chip" : ""}`}
+                      style={{ backgroundColor: `${item.color}25`, color: item.accent, boxShadow: `0 0 18px ${item.color}30` }}
                     >
-                      {item.name}
-                    </p>
-                    <p className="text-sm text-white/45">{item.status}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" style={{ color: item.accent, filter: `drop-shadow(0 0 8px ${item.color})` }} />
-                  <span className="maturity-wave" style={{ background: `linear-gradient(120deg, transparent, ${item.color}55, ${item.accent}44, transparent)` }} />
-                </motion.button>
-              ))}
+                      {item.id}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`font-semibold tracking-tight transition ${isProject8 ? "combined-word" : ""}`}
+                        style={{
+                          color: item.accent,
+                          textShadow:
+                            activeId === item.id
+                              ? `0 0 8px ${item.color}, 0 0 18px ${item.color}, 0 0 34px ${item.color}`
+                              : `0 0 10px ${item.color}77`,
+                        }}
+                      >
+                        {item.name}
+                      </p>
+                      <p className={`text-sm text-white/45 ${isProject8 ? "combined-word subtle" : ""}`}>{item.status}</p>
+                    </div>
+                    <ArrowRight className={`h-4 w-4 shrink-0 transition group-hover:translate-x-1 ${isProject8 ? "combined-icon" : ""}`} style={{ color: item.accent, filter: `drop-shadow(0 0 8px ${item.color})` }} />
+                    <span className="maturity-wave" style={{ background: isProject8 ? project8RainbowGradient : `linear-gradient(120deg, transparent, ${item.color}55, ${item.accent}44, transparent)` }} />
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div
+            className={`glass-panel rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 ${activeIsProject8 ? "project-card-combined value-combined" : ""}`}
+            style={
+              {
+                "--project-color": active.color,
+                "--project-accent": active.accent,
+                "--project-rainbow": project8RainbowGradient,
+              } as CSSProperties
+            }
+          >
             <div className="mb-5 flex items-center gap-3">
-              <Building2 className="h-6 w-6" style={{ color: active.accent }} />
-              <div>
-                <p className="text-sm text-white/50">Real-World Value</p>
-                <h3 className="text-2xl font-semibold">{active.name}</h3>
+              <Building2 className={`h-6 w-6 shrink-0 ${activeIsProject8 ? "combined-icon" : ""}`} style={{ color: active.accent }} />
+              <div className="min-w-0">
+                <p className={`text-sm text-white/50 ${activeIsProject8 ? "combined-word subtle" : ""}`}>Real-World Value</p>
+                <h3 className={`text-xl font-semibold sm:text-2xl ${activeIsProject8 ? "combined-word" : ""}`}>{active.name}</h3>
               </div>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[.72fr_1.28fr]">
-              <div className="overflow-hidden rounded-3xl border bg-black/35" style={{ borderColor: `${active.color}55`, boxShadow: `0 0 45px ${active.color}18` }}>
-                <div className="h-[255px]">
-                  <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} />
+              <div className={`overflow-hidden rounded-2xl border bg-black/35 sm:rounded-3xl ${activeIsProject8 ? "combined-frame" : ""}`} style={{ borderColor: activeIsProject8 ? "rgba(255,255,255,.28)" : `${active.color}55`, boxShadow: activeIsProject8 ? "0 0 45px rgba(239,68,68,.14), 0 0 70px rgba(59,130,246,.12)" : `0 0 45px ${active.color}18` }}>
+                <div className="h-[230px] sm:h-[255px]">
+                  <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
                 </div>
               </div>
 
@@ -1174,12 +1329,12 @@ export default function Home() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <a href={active.live} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm text-white transition hover:scale-[1.02]" style={{ borderColor: `${active.color}66`, backgroundColor: `${active.color}18`, boxShadow: `0 0 28px ${active.color}18` }}>
+                  <a href={active.live} target="_blank" rel="noreferrer" className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm text-white transition hover:scale-[1.02] sm:w-auto ${activeIsProject8 ? "combined-chip" : ""}`} style={{ borderColor: `${active.color}66`, backgroundColor: `${active.color}18`, boxShadow: `0 0 28px ${active.color}18` }}>
                     Open Live Demo <ExternalLink className="h-4 w-4" />
                   </a>
 
                   {active.github && (
-                    <a href={active.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1]">
+                    <a href={active.github} target="_blank" rel="noreferrer" className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 text-sm text-white transition hover:bg-white/[.1] sm:w-auto ${activeIsProject8 ? "combined-chip" : ""}`}>
                       GitHub <ExternalLink className="h-4 w-4" />
                     </a>
                   )}
@@ -1190,7 +1345,7 @@ export default function Home() {
             <div className="mt-5 grid gap-3 md:grid-cols-3">
               {active.proves.map((item) => (
                 <div key={item} className="rounded-3xl border border-white/10 bg-black/25 p-4">
-                  <p className="font-semibold" style={{ color: active.accent }}>{item}</p>
+                  <p className={`font-semibold ${activeIsProject8 ? "combined-word subtle" : ""}`} style={{ color: active.accent }}>{item}</p>
                   <p className="mt-2 text-sm leading-6 text-white/50">Demonstrates practical thinking for real enterprise AI work.</p>
                 </div>
               ))}

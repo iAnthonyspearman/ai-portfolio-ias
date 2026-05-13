@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -65,6 +65,8 @@ type PreviewAnchor = {
   delay: number;
 };
 
+type OrbRenderQuality = "feature" | "card";
+
 function shouldUseMobileVisualBudget() {
   if (typeof window === "undefined") {
     return true;
@@ -91,6 +93,33 @@ function subscribeToVisualBudget(onStoreChange: () => void) {
 
 function useMobileVisualBudget() {
   return useSyncExternalStore(subscribeToVisualBudget, shouldUseMobileVisualBudget, () => true);
+}
+
+function useNearViewport(rootMargin = "260px") {
+  const ref = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element || typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setNearViewport(entry.isIntersecting);
+      },
+      { rootMargin, threshold: 0.01 }
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [rootMargin]);
+
+  return { ref, nearViewport };
 }
 
 const portfolioItems: PortfolioItem[] = [
@@ -285,11 +314,13 @@ function Orb({
   color,
   accent,
   active,
+  compact,
 }: {
   anchor: OrbAnchor;
   color: string;
   accent: string;
   active: boolean;
+  compact: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
@@ -320,7 +351,7 @@ function Orb({
   return (
     <group ref={group} position={anchor.position}>
       <mesh ref={mesh}>
-        <sphereGeometry args={[0.18, 48, 48]} />
+        <sphereGeometry args={[0.18, compact ? 30 : 48, compact ? 30 : 48]} />
         <meshPhysicalMaterial
           color={color}
           emissive={color}
@@ -334,17 +365,17 @@ function Orb({
       </mesh>
 
       <mesh scale={1.52}>
-        <sphereGeometry args={[0.18, 32, 32]} />
+        <sphereGeometry args={[0.18, compact ? 22 : 32, compact ? 22 : 32]} />
         <meshBasicMaterial color={color} transparent opacity={active ? 0.052 : 0.022} />
       </mesh>
 
       <mesh ref={ring} rotation={[1.2 + anchor.tilt, 0.34, 0.6 - anchor.tilt * 0.5]}>
-        <torusGeometry args={[0.255, 0.008, 16, 90]} />
+        <torusGeometry args={[0.255, 0.008, compact ? 12 : 16, compact ? 60 : 90]} />
         <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={active ? 0.52 : 0.18} />
       </mesh>
 
       <mesh position={[-0.07, 0.08, 0.13]} scale={0.34}>
-        <sphereGeometry args={[0.08, 20, 20]} />
+        <sphereGeometry args={[0.08, compact ? 14 : 20, compact ? 14 : 20]} />
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.38} transparent opacity={0.5} />
       </mesh>
     </group>
@@ -487,6 +518,7 @@ function OrbConstellationCore({
             color={palette?.[index % palette.length] ?? (index % 2 === 0 ? color : accent)}
             accent={palette?.[(index + 1) % palette.length] ?? accent}
             active={active}
+            compact={compact}
           />
         ))}
 
@@ -533,6 +565,7 @@ function OrbConstellation({
   active,
   label,
   palette,
+  quality = "feature",
 }: {
   count: number;
   color: string;
@@ -540,26 +573,32 @@ function OrbConstellation({
   active: boolean;
   label: string;
   palette?: string[];
+  quality?: OrbRenderQuality;
 }) {
   const isMobile = useMobileVisualBudget();
-  const dpr: [number, number] = isMobile ? [1, 1] : [1, 2];
+  const isCard = quality === "card";
+  const compact = isMobile || isCard;
+  const dpr: [number, number] = isMobile ? [1, 1] : isCard ? [1, 1.35] : [1, 1.75];
   const primaryLight = palette?.[0] ?? color;
   const secondaryLight = palette?.[palette.length - 1] ?? accent;
+  const starCount = isMobile ? 70 : isCard ? 110 : 280;
+  const sparkleCount = Math.max(5, count * (isMobile ? 1 : isCard ? 2 : 5));
 
   return (
     <Canvas
       dpr={dpr}
       camera={{ position: [0, 0, isMobile ? 4.8 : 4.2], fov: isMobile ? 45 : 42 }}
       gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+      performance={{ min: 0.65 }}
     >
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={isMobile ? 0.34 : 0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
       <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 0.82 : 1.14} color={primaryLight} />
       <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.36 : 0.54} color={secondaryLight} />
-      {!isMobile && <Environment preset="city" />}
-      <Stars radius={35} depth={16} count={isMobile ? 70 : 280} factor={2.4} fade speed={0.2} />
-      <DreiSparkles count={Math.max(5, count * (isMobile ? 1 : 5))} scale={[2.4, 1.8, 1]} size={isMobile ? 0.82 : 1.4} speed={0.12} color={secondaryLight} />
+      {!isMobile && !isCard && <Environment preset="city" />}
+      <Stars radius={35} depth={16} count={starCount} factor={2.4} fade speed={0.2} />
+      <DreiSparkles count={sparkleCount} scale={[2.4, 1.8, 1]} size={isMobile ? 0.82 : isCard ? 1.05 : 1.4} speed={0.12} color={secondaryLight} />
 
       <OrbConstellationCore
         count={count}
@@ -567,11 +606,11 @@ function OrbConstellation({
         accent={accent}
         active={active}
         label={label}
-        compact={isMobile}
+        compact={compact}
         palette={palette}
       />
 
-      {!isMobile && (
+      {!isMobile && !isCard && (
         <EffectComposer>
 
 
@@ -590,6 +629,44 @@ function OrbConstellation({
 
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.16 : active ? 0.45 : 0.22} />
     </Canvas>
+  );
+}
+
+function OptimizedOrbConstellation({
+  count,
+  color,
+  accent,
+  active,
+  label,
+  palette,
+  quality = "feature",
+}: {
+  count: number;
+  color: string;
+  accent: string;
+  active: boolean;
+  label: string;
+  palette?: string[];
+  quality?: OrbRenderQuality;
+}) {
+  const { ref, nearViewport } = useNearViewport(quality === "card" ? "420px" : "640px");
+
+  return (
+    <div ref={ref} className="h-full w-full">
+      {nearViewport ? (
+        <OrbConstellation
+          count={count}
+          color={color}
+          accent={accent}
+          active={active}
+          label={label}
+          palette={palette}
+          quality={quality}
+        />
+      ) : (
+        <MobileOrbPreview count={count} color={color} accent={accent} active={active} label={label} palette={palette} />
+      )}
+    </div>
   );
 }
 
@@ -1340,7 +1417,7 @@ export default function Home() {
 
             <div className="h-[290px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[390px] sm:rounded-3xl">
               {showLivePreviewCanvases ? (
-                <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+                <OptimizedOrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
               ) : (
                 <MobileOrbPreview count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
               )}
@@ -1388,13 +1465,14 @@ export default function Home() {
 
                 <div className="h-[170px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[180px] sm:rounded-3xl">
                   {showLivePreviewCanvases ? (
-                    <OrbConstellation
+                    <OptimizedOrbConstellation
                       count={item.id}
                       color={item.color}
                       accent={item.accent}
                       active={selected || isProject8}
                       label={`${item.id}`}
                       palette={projectPalette}
+                      quality="card"
                     />
                   ) : (
                     <MobileOrbPreview
@@ -1512,7 +1590,7 @@ export default function Home() {
               <div className={`overflow-hidden rounded-2xl border bg-black/35 sm:rounded-3xl ${activeIsProject8 ? "combined-frame" : ""}`} style={{ borderColor: activeIsProject8 ? "rgba(255,255,255,.28)" : `${active.color}55`, boxShadow: activeIsProject8 ? "0 0 45px rgba(239,68,68,.14), 0 0 70px rgba(59,130,246,.12)" : `0 0 45px ${active.color}18` }}>
                 <div className="h-[230px] sm:h-[255px]">
                   {showLivePreviewCanvases ? (
-                    <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+                    <OptimizedOrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
                   ) : (
                     <MobileOrbPreview count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
                   )}

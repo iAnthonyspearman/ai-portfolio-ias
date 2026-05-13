@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -57,32 +57,39 @@ type OrbAnchor = {
   tilt: number;
 };
 
+type PreviewAnchor = {
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+};
+
 function shouldUseMobileVisualBudget() {
   if (typeof window === "undefined") {
-    return false;
+    return true;
   }
 
   return window.matchMedia("(max-width: 760px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches;
 }
 
+function subscribeToVisualBudget(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const mediaQueries = [
+    window.matchMedia("(max-width: 760px)"),
+    window.matchMedia("(pointer: coarse)"),
+    window.matchMedia("(prefers-reduced-motion: reduce)"),
+  ];
+
+  mediaQueries.forEach((query) => query.addEventListener("change", onStoreChange));
+
+  return () => mediaQueries.forEach((query) => query.removeEventListener("change", onStoreChange));
+}
+
 function useMobileVisualBudget() {
-  const [isMobile, setIsMobile] = useState(shouldUseMobileVisualBudget);
-
-  useEffect(() => {
-    const mediaQueries = [
-      window.matchMedia("(max-width: 760px)"),
-      window.matchMedia("(pointer: coarse)"),
-      window.matchMedia("(prefers-reduced-motion: reduce)"),
-    ];
-    const updateMobileState = () => setIsMobile(shouldUseMobileVisualBudget());
-
-    updateMobileState();
-    mediaQueries.forEach((query) => query.addEventListener("change", updateMobileState));
-
-    return () => mediaQueries.forEach((query) => query.removeEventListener("change", updateMobileState));
-  }, []);
-
-  return isMobile;
+  return useSyncExternalStore(subscribeToVisualBudget, shouldUseMobileVisualBudget, () => true);
 }
 
 const portfolioItems: PortfolioItem[] = [
@@ -542,6 +549,112 @@ function OrbConstellation({
 
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={isMobile ? 0.16 : active ? 0.45 : 0.22} />
     </Canvas>
+  );
+}
+
+function getPreviewAnchors(count: number): PreviewAnchor[] {
+  if (count === 1) {
+    return [{ x: 50, y: 50, size: 58, delay: 0 }];
+  }
+
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const spreadX = Math.min(34, 18 + count * 2.1);
+  const spreadY = Math.min(26, 14 + count * 1.35);
+
+  return Array.from({ length: count }, (_, index) => {
+    const t = count === 1 ? 0.5 : index / (count - 1);
+    const angle = index * goldenAngle + count * 0.32;
+    const band = Math.sqrt(Math.max(0.24, 1 - Math.pow((t * 2 - 1) * 0.74, 2)));
+
+    return {
+      x: 50 + Math.cos(angle) * spreadX * band + Math.sin(index * 1.8) * 3.5,
+      y: 50 + (0.5 - t) * spreadY + Math.sin(angle * 1.2) * 4.5,
+      size: 32 + ((index * 7 + count) % 4) * 5,
+      delay: index * 0.28,
+    };
+  });
+}
+
+function MobileOrbPreview({
+  count,
+  color,
+  accent,
+  label,
+  palette,
+  active,
+}: {
+  count: number;
+  color: string;
+  accent: string;
+  label: string;
+  palette?: string[];
+  active?: boolean;
+}) {
+  const anchors = useMemo(() => getPreviewAnchors(count), [count]);
+  const labelColor = palette ? "#ffffff" : accent;
+
+  return (
+    <div
+      className={`mobile-orb-preview ${palette ? "mobile-orb-preview-rainbow" : ""}`}
+      data-active={active ? "true" : "false"}
+      aria-hidden="true"
+      style={
+        {
+          "--preview-color": color,
+          "--preview-accent": accent,
+          "--preview-label": labelColor,
+        } as CSSProperties
+      }
+    >
+      {anchors.length > 1 &&
+        anchors.map((anchor, index) => {
+          const next = anchors[(index + 1) % anchors.length];
+          const xDistance = next.x - anchor.x;
+          const yDistance = next.y - anchor.y;
+          const length = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+          const angle = Math.atan2(yDistance, xDistance) * (180 / Math.PI);
+          const linkColor = palette?.[index % palette.length] ?? accent;
+
+          return (
+            <span
+              key={`mobile-link-${index}`}
+              className="mobile-constellation-link"
+              style={{
+                left: `${anchor.x}%`,
+                top: `${anchor.y}%`,
+                width: `${length}%`,
+                transform: `rotate(${angle}deg)`,
+                background: `linear-gradient(90deg, transparent, ${linkColor}cc, transparent)`,
+                boxShadow: `0 0 16px ${linkColor}66`,
+              }}
+            />
+          );
+        })}
+
+      {anchors.map((anchor, index) => {
+        const orbColor = palette?.[index % palette.length] ?? (index % 2 === 0 ? color : accent);
+
+        return (
+          <span
+            key={`mobile-orb-${index}`}
+            className="mobile-orb"
+            style={{
+              left: `calc(${anchor.x}% - ${anchor.size / 2}px)`,
+              top: `calc(${anchor.y}% - ${anchor.size / 2}px)`,
+              width: anchor.size,
+              height: anchor.size,
+              animationDelay: `${anchor.delay}s`,
+              background: `radial-gradient(circle at 32% 24%, #ffffff, ${orbColor} 38%, #02040b 74%)`,
+              boxShadow: `0 0 ${active ? 34 : 24}px ${orbColor}99, inset -10px -12px 24px rgba(0,0,0,.55), inset 7px 7px 14px rgba(255,255,255,.16)`,
+            }}
+          />
+        );
+      })}
+
+      <span className={`mobile-orb-label ${palette ? "mobile-orb-label-rainbow" : ""}`}>
+        {label}
+      </span>
+    </div>
   );
 }
 
@@ -1098,6 +1211,8 @@ function iconFor(id: number) {
 export default function Home() {
   const [activeId, setActiveId] = useState(8);
   const [openProject, setOpenProject] = useState<PortfolioItem | null>(null);
+  const mobileVisualBudget = useMobileVisualBudget();
+  const showLivePreviewCanvases = !mobileVisualBudget;
   const active = portfolioItems.find((item) => item.id === activeId) ?? portfolioItems[7];
   const activeIsProject8 = active.id === 8;
   const activePalette = paletteForProject(active.id);
@@ -1180,7 +1295,11 @@ export default function Home() {
             </div>
 
             <div className="h-[290px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[390px] sm:rounded-3xl">
-              <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+              {showLivePreviewCanvases ? (
+                <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+              ) : (
+                <MobileOrbPreview count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+              )}
             </div>
           </motion.section>
         </div>
@@ -1224,14 +1343,25 @@ export default function Home() {
                 </div>
 
                 <div className="h-[170px] overflow-hidden rounded-2xl border border-white/10 bg-black/35 sm:h-[180px] sm:rounded-3xl">
-                  <OrbConstellation
-                    count={item.id}
-                    color={item.color}
-                    accent={item.accent}
-                    active={selected || isProject8}
-                    label={`${item.id}`}
-                    palette={projectPalette}
-                  />
+                  {showLivePreviewCanvases ? (
+                    <OrbConstellation
+                      count={item.id}
+                      color={item.color}
+                      accent={item.accent}
+                      active={selected || isProject8}
+                      label={`${item.id}`}
+                      palette={projectPalette}
+                    />
+                  ) : (
+                    <MobileOrbPreview
+                      count={item.id}
+                      color={item.color}
+                      accent={item.accent}
+                      active={selected || isProject8}
+                      label={`${item.id}`}
+                      palette={projectPalette}
+                    />
+                  )}
                 </div>
 
                 <h3 className={`mt-5 text-xl font-semibold ${isProject8 ? "combined-word" : ""}`} style={{ color: item.accent, textShadow: `0 0 16px ${item.color}77` }}>
@@ -1337,7 +1467,11 @@ export default function Home() {
             <div className="grid gap-5 lg:grid-cols-[.72fr_1.28fr]">
               <div className={`overflow-hidden rounded-2xl border bg-black/35 sm:rounded-3xl ${activeIsProject8 ? "combined-frame" : ""}`} style={{ borderColor: activeIsProject8 ? "rgba(255,255,255,.28)" : `${active.color}55`, boxShadow: activeIsProject8 ? "0 0 45px rgba(239,68,68,.14), 0 0 70px rgba(59,130,246,.12)" : `0 0 45px ${active.color}18` }}>
                 <div className="h-[230px] sm:h-[255px]">
-                  <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+                  {showLivePreviewCanvases ? (
+                    <OrbConstellation count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+                  ) : (
+                    <MobileOrbPreview count={active.id} color={active.color} accent={active.accent} active label={active.name} palette={activePalette} />
+                  )}
                 </div>
               </div>
 

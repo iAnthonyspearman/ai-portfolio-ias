@@ -324,7 +324,7 @@ function Orb({
         <meshPhysicalMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={active ? 0.48 : 0.22}
+          emissiveIntensity={active ? 0.34 : 0.14}
           metalness={0.84}
           roughness={0.12}
           clearcoat={1}
@@ -335,17 +335,17 @@ function Orb({
 
       <mesh scale={1.52}>
         <sphereGeometry args={[0.18, 32, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={active ? 0.13 : 0.06} />
+        <meshBasicMaterial color={color} transparent opacity={active ? 0.085 : 0.035} />
       </mesh>
 
       <mesh ref={ring} rotation={[1.2 + anchor.tilt, 0.34, 0.6 - anchor.tilt * 0.5]}>
         <torusGeometry args={[0.255, 0.008, 16, 90]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={active ? 1.2 : 0.45} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={active ? 0.78 : 0.28} />
       </mesh>
 
       <mesh position={[-0.07, 0.08, 0.13]} scale={0.34}>
         <sphereGeometry args={[0.08, 20, 20]} />
-        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.82} transparent opacity={0.82} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.56} transparent opacity={0.62} />
       </mesh>
     </group>
   );
@@ -555,8 +555,8 @@ function OrbConstellation({
       <color attach="background" args={["#050711"]} />
       <ambientLight intensity={isMobile ? 0.34 : 0.26} />
       <directionalLight position={[-3.5, 4.4, 4.5]} intensity={isMobile ? 1.55 : 2.25} />
-      <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 1.35 : 2.2} color={primaryLight} />
-      <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.72 : 1.1} color={secondaryLight} />
+      <pointLight position={[2.4, 2.2, 2.6]} intensity={isMobile ? 1.05 : 1.55} color={primaryLight} />
+      <pointLight position={[-2.2, -1.6, 2]} intensity={isMobile ? 0.52 : 0.78} color={secondaryLight} />
       {!isMobile && <Environment preset="city" />}
       <Stars radius={35} depth={16} count={isMobile ? 70 : 280} factor={2.4} fade speed={0.2} />
       <DreiSparkles count={Math.max(5, count * (isMobile ? 1 : 5))} scale={[2.4, 1.8, 1]} size={isMobile ? 0.82 : 1.4} speed={0.12} color={secondaryLight} />
@@ -575,7 +575,7 @@ function OrbConstellation({
         <EffectComposer>
 
 
-          <Bloom intensity={0.55} luminanceThreshold={0.18} luminanceSmoothing={0.35} />
+          <Bloom intensity={0.32} luminanceThreshold={0.25} luminanceSmoothing={0.38} />
 
 
           <Noise opacity={0.018} />
@@ -666,7 +666,7 @@ function MobileOrbPreview({
                 width: `${length}%`,
                 transform: `rotate(${angle}deg)`,
                 background: `linear-gradient(90deg, transparent, ${linkColor}cc, transparent)`,
-                boxShadow: `0 0 16px ${linkColor}66`,
+                boxShadow: `0 0 9px ${linkColor}44`,
               }}
             />
           );
@@ -686,7 +686,7 @@ function MobileOrbPreview({
               height: anchor.size,
               animationDelay: `${anchor.delay}s`,
               background: `radial-gradient(circle at 32% 24%, #ffffff, ${orbColor} 38%, #02040b 74%)`,
-              boxShadow: `0 0 ${active ? 34 : 24}px ${orbColor}99, inset -10px -12px 24px rgba(0,0,0,.55), inset 7px 7px 14px rgba(255,255,255,.16)`,
+              boxShadow: `0 0 ${active ? 22 : 15}px ${orbColor}66, inset -10px -12px 24px rgba(0,0,0,.58), inset 7px 7px 14px rgba(255,255,255,.13)`,
             }}
           />
         );

@@ -633,6 +633,7 @@ function MobileOrbPreview({
 }) {
   const anchors = useMemo(() => getPreviewAnchors(count), [count]);
   const labelColor = palette ? "#ffffff" : accent;
+  const showPreviewLabel = !/^\d+$/.test(label.trim());
 
   return (
     <div
@@ -692,9 +693,11 @@ function MobileOrbPreview({
         );
       })}
 
-      <span className={`mobile-orb-label ${palette ? "mobile-orb-label-rainbow" : ""}`}>
-        {label}
-      </span>
+      {showPreviewLabel && (
+        <span className={`mobile-orb-label ${palette ? "mobile-orb-label-rainbow" : ""}`}>
+          {label}
+        </span>
+      )}
     </div>
   );
 }

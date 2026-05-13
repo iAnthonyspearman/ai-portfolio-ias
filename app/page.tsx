@@ -43,6 +43,7 @@ type PortfolioItem = {
   industries: string[];
   workflowValue: string;
   proves: string[];
+  proofDetails: string[];
   status: string;
   live: string;
   github?: string;
@@ -107,6 +108,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Creates one clear command center for presenting demos, technical proof, project links, and AI career positioning.",
     proves: ["AI portfolio identity", "system presentation", "career positioning"],
+    proofDetails: [
+      "Clarifies the portfolio's purpose, direction, and system progression so visitors understand the full AI journey quickly.",
+      "Organizes multiple projects into one polished experience, making the live demos and technical maturity easy to compare.",
+      "Frames the work around practical AI Solutions Engineering value instead of only showing isolated code examples.",
+    ],
     status: "Foundation",
     live: "https://ai-systems-lab-blue.vercel.app/",
   },
@@ -124,6 +130,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Reduces confusion by translating business needs into structured implementation steps, technical direction, and execution planning.",
     proves: ["deployment thinking", "prompt-to-plan workflow", "business translation"],
+    proofDetails: [
+      "Breaks vague requests into deployable scope, priorities, risks, and action steps before engineering work begins.",
+      "Turns a user's prompt into a structured plan that teams can review, adjust, and execute without starting from scratch.",
+      "Bridges business language and technical implementation so stakeholders and builders can move in the same direction.",
+    ],
     status: "Deployment Layer",
     live: "https://ai-deployment-console.vercel.app/",
   },
@@ -141,6 +152,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Improves speed and consistency by turning repeated work into structured workflows with clear ownership and next actions.",
     proves: ["workflow logic", "automation design", "business process support"],
+    proofDetails: [
+      "Maps intake, routing, ownership, status changes, and handoffs so repeated work follows a reliable path.",
+      "Identifies which manual steps can be standardized or automated before a team invests in a full build.",
+      "Supports operations by keeping summaries, next actions, follow-ups, and task flow consistent across teams.",
+    ],
     status: "Workflow Layer",
     live: "https://ai-workflow-automation-ias.vercel.app/",
   },
@@ -158,6 +174,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Turns documents into searchable intelligence so teams can retrieve policies, procedures, insights, and answers faster.",
     proves: ["RAG thinking", "knowledge retrieval", "document intelligence"],
+    proofDetails: [
+      "Shows how documents can be prepared, searched, retrieved, and reasoned over by an AI knowledge system.",
+      "Helps teams find accurate answers from policies, procedures, notes, and internal knowledge without manual searching.",
+      "Turns static files into usable summaries, comparisons, guidance, and operational insight.",
+    ],
     status: "Knowledge Layer",
     live: "https://ai-rag-system-ias.vercel.app/",
   },
@@ -175,6 +196,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Improves revenue workflows by surfacing risks, opportunities, next actions, and executive-level sales intelligence.",
     proves: ["revenue intelligence", "pipeline analysis", "executive insights"],
+    proofDetails: [
+      "Surfaces growth opportunities, account risk, customer patterns, and deal signals that revenue teams can act on.",
+      "Helps leaders understand deal movement, stalled opportunities, bottlenecks, and where attention is needed.",
+      "Condenses revenue activity into leadership-ready insight for faster decisions and clearer priorities.",
+    ],
     status: "Revenue Layer",
     live: "https://ai-revenue-intelligence-ias.vercel.app/",
   },
@@ -192,6 +218,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Helps service teams route urgent work, detect bottlenecks, prioritize risk, and improve customer experience.",
     proves: ["service operations", "customer intelligence", "risk detection"],
+    proofDetails: [
+      "Tracks support volume, escalation flow, SLA pressure, and operational workload so service teams can respond faster.",
+      "Finds patterns in tickets, complaints, sentiment, recurring issues, and customer needs.",
+      "Flags urgent service problems and bottlenecks before they grow into escalations or missed service targets.",
+    ],
     status: "Service Layer",
     live: "https://ai-service-ops-ias.vercel.app/",
   },
@@ -209,6 +240,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Connects people, process, automation, governance, and executive visibility into one operating model.",
     proves: ["enterprise orchestration", "governance logic", "multi-agent coordination"],
+    proofDetails: [
+      "Aligns departments, workflows, readiness, automation opportunities, and roadmaps into one enterprise operating model.",
+      "Shows where approvals, controls, oversight, and readiness checks should exist before automation scales across a company.",
+      "Models how specialized AI agents or teams can coordinate, pass context, and complete work without losing accountability.",
+    ],
     status: "Enterprise Layer",
     live: "https://ai-enterprise-orchestrator-ias.vercel.app/",
   },
@@ -226,6 +262,11 @@ const portfolioItems: PortfolioItem[] = [
     workflowValue:
       "Shows how AI can move beyond answering questions into routing tasks, coordinating action, monitoring risk, and updating execution state.",
     proves: ["autonomous operations", "3D agent networks", "execution simulation"],
+    proofDetails: [
+      "Shows AI moving operational work forward through queues, risk flags, status updates, routing, and executive visibility.",
+      "Visualizes connected agents, dependencies, and coordination paths so complex operational systems are easier to understand.",
+      "Demonstrates how automated operations could behave before connecting to real systems or production workflows.",
+    ],
     status: "Autonomous Layer",
     live: "https://ai-autonomous-ops-ias.vercel.app/",
     github: "https://github.com/iAnthonyspearman/ai-operations-intel-ias",
@@ -1497,10 +1538,10 @@ export default function Home() {
             </div>
 
             <div className="mt-5 grid gap-3 md:grid-cols-3">
-              {active.proves.map((item) => (
+              {active.proves.map((item, index) => (
                 <div key={item} className="rounded-3xl border border-white/10 bg-black/25 p-4">
                   <p className={`font-semibold ${activeIsProject8 ? "combined-word subtle" : ""}`} style={{ color: active.accent }}>{item}</p>
-                  <p className="mt-2 text-sm leading-6 text-white/50">Demonstrates practical thinking for real enterprise AI work.</p>
+                  <p className="mt-2 text-sm leading-6 text-white/50">{active.proofDetails[index]}</p>
                 </div>
               ))}
             </div>

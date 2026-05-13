@@ -261,26 +261,26 @@ canvas {
   border-color: rgba(255, 255, 255, 0.36) !important;
   box-shadow:
     0 34px 115px rgba(0, 0, 0, 0.62),
-    0 0 42px rgba(239, 68, 68, 0.22),
-    0 0 58px rgba(34, 197, 94, 0.18),
-    0 0 86px rgba(59, 130, 246, 0.18),
-    0 0 120px rgba(139, 92, 246, 0.18),
+    0 0 24px rgba(239, 68, 68, 0.12),
+    0 0 34px rgba(34, 197, 94, 0.09),
+    0 0 48px rgba(59, 130, 246, 0.09),
+    0 0 64px rgba(139, 92, 246, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 .project-card-combined::after {
   background:
-    radial-gradient(circle at 16% 8%, rgba(239, 68, 68, 0.34), transparent 34%),
-    radial-gradient(circle at 38% 6%, rgba(234, 179, 8, 0.26), transparent 32%),
-    radial-gradient(circle at 64% 18%, rgba(34, 197, 94, 0.22), transparent 34%),
-    radial-gradient(circle at 86% 28%, rgba(59, 130, 246, 0.22), transparent 34%),
-    radial-gradient(circle at 54% 84%, rgba(139, 92, 246, 0.24), transparent 36%) !important;
-  opacity: 0.86 !important;
-  filter: blur(14px) !important;
+    radial-gradient(circle at 16% 8%, rgba(239, 68, 68, 0.14), transparent 34%),
+    radial-gradient(circle at 38% 6%, rgba(234, 179, 8, 0.10), transparent 32%),
+    radial-gradient(circle at 64% 18%, rgba(34, 197, 94, 0.09), transparent 34%),
+    radial-gradient(circle at 86% 28%, rgba(59, 130, 246, 0.10), transparent 34%),
+    radial-gradient(circle at 54% 84%, rgba(139, 92, 246, 0.10), transparent 36%) !important;
+  opacity: 0.44 !important;
+  filter: blur(18px) !important;
 }
 
 .project-card-combined canvas {
-  filter: saturate(1.46) contrast(1.12) brightness(1.08);
+  filter: saturate(1.18) contrast(1.08) brightness(1.02);
 }
 
 .selected-system-combined,
@@ -289,11 +289,11 @@ canvas {
 .maturity-combined {
   background:
     linear-gradient(145deg, rgba(255,255,255,.095), rgba(255,255,255,.038)),
-    radial-gradient(circle at 15% 8%, rgba(239, 68, 68, 0.18), transparent 30%),
-    radial-gradient(circle at 42% 5%, rgba(234, 179, 8, 0.14), transparent 30%),
-    radial-gradient(circle at 70% 12%, rgba(34, 197, 94, 0.13), transparent 32%),
-    radial-gradient(circle at 88% 35%, rgba(59, 130, 246, 0.14), transparent 32%),
-    radial-gradient(circle at 54% 90%, rgba(139, 92, 246, 0.15), transparent 34%),
+    radial-gradient(circle at 15% 8%, rgba(239, 68, 68, 0.08), transparent 30%),
+    radial-gradient(circle at 42% 5%, rgba(234, 179, 8, 0.06), transparent 30%),
+    radial-gradient(circle at 70% 12%, rgba(34, 197, 94, 0.06), transparent 32%),
+    radial-gradient(circle at 88% 35%, rgba(59, 130, 246, 0.07), transparent 32%),
+    radial-gradient(circle at 54% 90%, rgba(139, 92, 246, 0.07), transparent 34%),
     rgba(5, 7, 17, 0.78) !important;
 }
 
@@ -303,11 +303,11 @@ canvas {
   border-color: rgba(255, 255, 255, 0.34) !important;
   box-shadow:
     0 30px 100px rgba(0, 0, 0, 0.56),
-    0 0 42px rgba(239, 68, 68, 0.20),
-    0 0 58px rgba(234, 179, 8, 0.12),
-    0 0 74px rgba(34, 197, 94, 0.13),
-    0 0 92px rgba(59, 130, 246, 0.14),
-    0 0 122px rgba(139, 92, 246, 0.15),
+    0 0 22px rgba(239, 68, 68, 0.09),
+    0 0 30px rgba(234, 179, 8, 0.06),
+    0 0 38px rgba(34, 197, 94, 0.06),
+    0 0 48px rgba(59, 130, 246, 0.07),
+    0 0 62px rgba(139, 92, 246, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
@@ -315,26 +315,26 @@ canvas {
 .combined-frame {
   border-color: rgba(255, 255, 255, 0.28) !important;
   background:
-    radial-gradient(circle at 15% 16%, rgba(239, 68, 68, 0.16), transparent 28%),
-    radial-gradient(circle at 34% 8%, rgba(249, 115, 22, 0.13), transparent 30%),
-    radial-gradient(circle at 50% 18%, rgba(234, 179, 8, 0.12), transparent 30%),
-    radial-gradient(circle at 64% 78%, rgba(34, 197, 94, 0.12), transparent 32%),
-    radial-gradient(circle at 80% 28%, rgba(59, 130, 246, 0.14), transparent 34%),
-    radial-gradient(circle at 88% 76%, rgba(139, 92, 246, 0.15), transparent 34%),
+    radial-gradient(circle at 15% 16%, rgba(239, 68, 68, 0.07), transparent 28%),
+    radial-gradient(circle at 34% 8%, rgba(249, 115, 22, 0.06), transparent 30%),
+    radial-gradient(circle at 50% 18%, rgba(234, 179, 8, 0.055), transparent 30%),
+    radial-gradient(circle at 64% 78%, rgba(34, 197, 94, 0.055), transparent 32%),
+    radial-gradient(circle at 80% 28%, rgba(59, 130, 246, 0.06), transparent 34%),
+    radial-gradient(circle at 88% 76%, rgba(139, 92, 246, 0.06), transparent 34%),
     linear-gradient(145deg, rgba(255,255,255,.05), rgba(0,0,0,.48)),
     #050711 !important;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.10),
     inset 0 -42px 96px rgba(0,0,0,.52),
-    0 0 34px rgba(239, 68, 68, 0.16),
-    0 0 52px rgba(34, 197, 94, 0.12),
-    0 0 72px rgba(59, 130, 246, 0.12),
+    0 0 18px rgba(239, 68, 68, 0.07),
+    0 0 26px rgba(34, 197, 94, 0.05),
+    0 0 36px rgba(59, 130, 246, 0.05),
     0 28px 82px rgba(0,0,0,.52) !important;
 }
 
 .combined-dna canvas,
 .combined-frame canvas {
-  filter: saturate(1.42) contrast(1.12) brightness(1.06);
+  filter: saturate(1.16) contrast(1.08) brightness(1.02);
 }
 
 .combined-word {
@@ -353,12 +353,14 @@ canvas {
 }
 
 .combined-chip {
-  background: var(--project-rainbow) !important;
+  background:
+    linear-gradient(rgba(5, 7, 17, 0.72), rgba(5, 7, 17, 0.72)),
+    var(--project-rainbow) !important;
   background-size: 260% 100% !important;
-  border-color: rgba(255, 255, 255, 0.34) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
   color: white !important;
   animation: project8RainbowSweep var(--rainbow-cycle-duration) linear infinite;
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
 
@@ -422,11 +424,12 @@ canvas {
 }
 
 .mobile-orb-preview-rainbow::before {
-  background: var(--project-rainbow);
-  background-size: 320% 100%;
-  animation:
-    project8RainbowSweep var(--rainbow-cycle-duration) linear infinite,
-    mobilePreviewDrift 13s ease-in-out infinite alternate;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255,255,255,.08), transparent 30%),
+    radial-gradient(circle at 72% 72%, rgba(255,255,255,.045), transparent 34%);
+  background-size: auto;
+  opacity: .34;
+  animation: mobilePreviewDrift 13s ease-in-out infinite alternate;
 }
 
 .mobile-constellation-link {

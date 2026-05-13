@@ -101,17 +101,17 @@ const portfolioItems: PortfolioItem[] = [
     color: "#ef4444",
     accent: "#fecaca",
     purpose:
-      "A central AI portfolio hub showing technical direction, project maturity, and the foundation of the AI systems journey.",
+      "A practical AI systems guide showing different AI use cases, what each system is good for, and how AI can turn business problems into workflows.",
     businessUse:
-      "Used as a professional AI systems showcase for recruiters, executives, and technical teams to understand project capability in one place.",
-    industries: ["Technology", "Consulting", "Education", "Recruiting"],
+      "Used by teams, founders, and operators who need to understand which AI system fits a business problem before building or deploying a workflow.",
+    industries: ["Operations", "Sales", "Support", "Knowledge Work", "Consulting"],
     workflowValue:
-      "Creates one clear command center for presenting demos, technical proof, project links, and AI career positioning.",
-    proves: ["AI portfolio identity", "system presentation", "career positioning"],
+      "Connects business signals, AI reasoning, workflow actions, handoffs, and measurable outcomes into clear system examples.",
+    proves: ["AI system use cases", "workflow mapping", "business application fit"],
     proofDetails: [
-      "Clarifies the portfolio's purpose, direction, and system progression so visitors understand the full AI journey quickly.",
-      "Organizes multiple projects into one polished experience, making the live demos and technical maturity easy to compare.",
-      "Frames the work around practical AI Solutions Engineering value instead of only showing isolated code examples.",
+      "Explains where different AI systems make sense, from intake and summaries to routing, knowledge retrieval, revenue support, and operations.",
+      "Shows how inputs, AI reasoning, actions, handoffs, and results connect into a usable business workflow.",
+      "Helps decide which AI approach fits the problem instead of forcing every use case into the same kind of tool.",
     ],
     status: "Foundation",
     live: "https://ai-systems-lab-blue.vercel.app/",
